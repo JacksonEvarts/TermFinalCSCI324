@@ -23,19 +23,33 @@ struct ContentView: View {
     @State var MapLocations = [MapLocation(name: "PIN 1", latitude: 42.2392, longitude: -71.8080), MapLocation(name: "PIN 2", latitude: 40.8559, longitude: -73.2007)]
     
     var body: some View {
-        VStack {
-            Map(coordinateRegion: $viewModel.region,
-                interactionModes: MapInteractionModes.all, showsUserLocation: true,
-                annotationItems: MapLocations,
-                annotationContent: {
-                location in MapMarker(coordinate: location.coordinate, tint: .red)
-            }
-                ) // shows location if we have user's permission
-                .ignoresSafeArea()
-                .accentColor(Color(.systemMint))
-                .onAppear {
-                    viewModel.checkLocationAuthorization()
+        NavigationView{
+            VStack {
+                ZStack{
+                    Map(coordinateRegion: $viewModel.region,
+                        interactionModes: MapInteractionModes.all, showsUserLocation: true,
+                        annotationItems: MapLocations,
+                        annotationContent: {
+                        location in MapMarker(coordinate: location.coordinate, tint: .red)
+                    }
+                    ) // shows location if we have user's permission
+                    .ignoresSafeArea()
+                    .accentColor(Color(.systemMint))
+                    .onAppear {
+                        viewModel.checkLocationAuthorization()
+                    }
+                    NavigationLink(destination: CameraView()) {
+                        
+                        Image(systemName: "camera.circle.fill")
+                            .resizable()
+                            .frame(width: 50, height: 50)
+                            .position(x: UIScreen.main.bounds.width / 2, y: UIScreen.main.bounds.height - 100)
+
+                    }
+                    
+                    
                 }
+            }
         }
     }
 }
