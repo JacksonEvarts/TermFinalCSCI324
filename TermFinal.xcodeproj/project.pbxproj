@@ -21,6 +21,7 @@
 		B745C9E529D0E8A0002B0162 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B745C9E829D0E8A0002B0162 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		B7D177FE29DA6BB000E60978 /* ContentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentViewModel.swift; sourceTree = "<group>"; };
+		FF8DE3E629F1BFEE00508399 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -53,6 +54,7 @@
 		B745C9E029D0E89E002B0162 /* TermFinal */ = {
 			isa = PBXGroup;
 			children = (
+				FF8DE3E629F1BFEE00508399 /* Info.plist */,
 				B745C9E129D0E89E002B0162 /* TermFinalApp.swift */,
 				B745C9E329D0E89E002B0162 /* ContentView.swift */,
 				B745C9E529D0E8A0002B0162 /* Assets.xcassets */,
@@ -271,10 +273,12 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"TermFinal/Preview Content\"";
-				DEVELOPMENT_TEAM = P6M5J7435U;
+				DEVELOPMENT_TEAM = LN5SF7XH23;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs your location to show you on the map.";
+				INFOPLIST_FILE = TermFinal/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "TermFinal Allow this app to access camera?";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "$(PRODUCT_NAME) Please bro";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -301,10 +305,12 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"TermFinal/Preview Content\"";
-				DEVELOPMENT_TEAM = P6M5J7435U;
+				DEVELOPMENT_TEAM = LN5SF7XH23;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs your location to show you on the map.";
+				INFOPLIST_FILE = TermFinal/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "TermFinal Allow this app to access camera?";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "$(PRODUCT_NAME) Please bro";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

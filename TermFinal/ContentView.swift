@@ -6,53 +6,87 @@
 
 import MapKit
 import SwiftUI
+import CoreLocation
 
 struct MapLocation: Identifiable {
     let id = UUID()
     let name: String
     let latitude: Double
     let longitude: Double
-    var coordinate: CLLocationCoordinate2D{
+    var photo: UIImage?
+    var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
 }
 
 struct ContentView: View {
+    @State private var showingCamera = false
+    @State private var selectedImage: UIImage?
     @State private var region = MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 42.235830, longitude: -71.811030), span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))
-    @StateObject private var viewModel = ContentViewModel() // Making content view model observable
-    @State var MapLocations = [MapLocation(name: "PIN 1", latitude: 42.2392, longitude: -71.8080), MapLocation(name: "PIN 2", latitude: 40.8559, longitude: -73.2007)]
-    
+    @StateObject private var viewModel = LocationViewModel()
+    @State var MapLocations = [
+        MapLocation(name: "PIN 1", latitude: 42.238237, longitude: -71.810519, photo: nil),
+        MapLocation(name: "PIN 2", latitude: 40.8559, longitude: -73.2007, photo: nil)
+    ]
+    @State private var userLocation: CLLocation?
+
+    func userIsNearPin(distance: Double = 5) -> Bool {
+        guard let userLocation = userLocation else { return false }
+        for location in MapLocations {
+            let pinLocation = CLLocation(latitude: location.latitude, longitude: location.longitude)
+            if userLocation.distance(from: pinLocation) <= distance {
+                return true
+            }
+        }
+        return false
+    }
+
+    func pinColor(location: MapLocation) -> Color {
+        return location.photo != nil ? .green : .red
+    }
+
     var body: some View {
-        NavigationView{
-            VStack {
-                ZStack{
-                    Map(coordinateRegion: $region,
-                        interactionModes: MapInteractionModes.all, showsUserLocation: true,
-                        annotationItems: MapLocations,
-                        annotationContent: {
-                        location in MapMarker(coordinate: location.coordinate, tint: .red)
-                    }
-                    ) // shows location if we have user's permission
+        NavigationView {
+            ZStack {
+                MapView(region: $region, userLocation: $userLocation, MapLocations: $MapLocations)
                     .ignoresSafeArea()
                     .accentColor(Color(.systemMint))
                     .onAppear {
                         viewModel.checkLocationAuthorization()
                     }
-                    NavigationLink(destination: CameraView()) {
-                        
-                        Image(systemName: "camera.circle.fill")
-                            .resizable()
-                            .frame(width: 50, height: 50)
-                            .position(x: UIScreen.main.bounds.width / 2, y: UIScreen.main.bounds.height - 100)
-
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            if userIsNearPin() {
+                                showingCamera = true
+                            }
+                        }) {
+                            Image(systemName: "camera.circle.fill")
+                                .resizable()
+                                .frame(width: 75, height: 75)
+                                .padding()
+                        }
+                        .disabled(!userIsNearPin())
+                        .opacity(userIsNearPin() ? 1 : 0.5)
+                        .padding()
+                        Spacer()
                     }
-                    
-                    
+                }
+                .sheet(isPresented: $showingCamera) {
+                    ImagePicker(sourceType: .camera) { image in
+                        selectedImage = image
+                        if let selectedIndex = MapLocations.firstIndex(where: { userLocation?.distance(from: CLLocation(latitude: $0.latitude, longitude: $0.longitude)) ?? 0 <= 5 }) {
+                            MapLocations[selectedIndex].photo = image
+                        }
+                    }
                 }
             }
         }
     }
 }
+
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
@@ -60,40 +94,158 @@ struct ContentView_Previews: PreviewProvider {
     }
 }
 
-final class ContentViewModel: NSObject, ObservableObject, CLLocationManagerDelegate{
+final class LocationViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     var locationManager: CLLocationManager?
     
     func checkIfLocationServicesIsEnabled() {
-        if CLLocationManager.locationServicesEnabled(){
+        if CLLocationManager.locationServicesEnabled() {
             locationManager = CLLocationManager()
-            locationManager!.delegate = self // force unwrapping
+            locationManager!.delegate = self
         } else {
-            // TODO: Show an alert letting them know this is off!
             print("Err")
-            
         }
     }
+    
     public func checkLocationAuthorization() {
-        guard let locationManager = locationManager else { return } // unwrap the optional so we can use 'locationManager' in the function
+        guard let locationManager = locationManager else { return }
         switch locationManager.authorizationStatus {
-            
-            case .notDetermined: // ask for permission
-                locationManager.requestWhenInUseAuthorization()
-            case .restricted:
-                print("Your location is restricted.")
-            case .denied:
-                print("You denied the location feature for this app.")
-            case .authorizedAlways, .authorizedWhenInUse:
-                break
-            @unknown default:
-                break
-            
+        case .notDetermined:
+            locationManager.requestWhenInUseAuthorization()
+        case .restricted:
+            print("Your location is restricted.")
+        case .denied:
+            print("You denied the location feature for this app.")
+        case .authorizedAlways, .authorizedWhenInUse:
+            locationManager.startUpdatingLocation() // Start updating the user's location
+        @unknown default:
+            break
         }
-        
-        
     }
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) { // delegate method - anytime the location settings change this function will be called
+    
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         checkLocationAuthorization()
-        
+    }
+    
+    // Add this function to update the user location
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let location = locations.last else { return }
+        locationManager?.stopUpdatingLocation()
+        NotificationCenter.default.post(name: NSNotification.Name("UserLocationUpdated"), object: location)
     }
 }
+
+struct MapView: UIViewRepresentable {
+    @Binding var region: MKCoordinateRegion
+    @Binding var userLocation: CLLocation?
+    @Binding var MapLocations: [MapLocation]
+    
+    func makeUIView(context: Context) -> MKMapView {
+        let mapView = MKMapView()
+        mapView.delegate = context.coordinator
+        mapView.showsUserLocation = true
+        return mapView
+    }
+    
+    func updateUIView(_ view: MKMapView, context: Context) {
+        if let userLocation = userLocation {
+            region.center = CLLocationCoordinate2D(latitude: userLocation.coordinate.latitude, longitude: userLocation.coordinate.longitude)
+        }
+        view.removeAnnotations(view.annotations)
+        for location in MapLocations {
+            let annotation = MKPointAnnotation()
+            annotation.coordinate = location.coordinate
+            annotation.title = location.name
+            view.addAnnotation(annotation)
+        }
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, MKMapViewDelegate {
+        var mapView: MapView
+        
+        init(_ mapView: MapView) {
+            self.mapView = mapView
+            super.init()
+            NotificationCenter.default.addObserver(self, selector: #selector(userLocationUpdated(notification:)), name: NSNotification.Name("UserLocationUpdated"), object: nil)
+        }
+        
+        @objc func userLocationUpdated(notification: Notification) {
+            if let location = notification.object as? CLLocation {
+                mapView.userLocation = location
+                mapView.region.center = location.coordinate
+            }
+        }
+        
+        func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+            guard !(annotation is MKUserLocation) else { return nil }
+            let identifier = "MapPin"
+            var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier)
+            
+            if annotationView == nil {
+                annotationView = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: identifier)
+                annotationView!.canShowCallout = true
+            } else {
+                annotationView!.annotation = annotation
+            }
+            
+            let location = self.mapView.MapLocations.first { $0.coordinate.latitude == annotation.coordinate.latitude && $0.coordinate.longitude == annotation.coordinate.longitude }
+            if let location = location, let photo = location.photo {
+                let imageView = UIImageView(frame: CGRect(x: 0, y: 0, width: 50, height: 50))
+                imageView.image = photo
+                imageView.contentMode = .scaleAspectFill
+                imageView.clipsToBounds = true
+                annotationView!.leftCalloutAccessoryView = imageView
+            }
+            
+            (annotationView as? MKMarkerAnnotationView)?.markerTintColor = location?.photo != nil ? .green : .red
+            
+            return annotationView
+        }
+        
+        func mapView(_ mapView: MKMapView, didUpdate userLocation: MKUserLocation) {
+            self.mapView.userLocation = CLLocation(latitude: userLocation.coordinate.latitude,
+                                                   longitude: userLocation.coordinate.longitude)
+        }
+    }
+}
+struct ImagePicker: UIViewControllerRepresentable {
+    var sourceType: UIImagePickerController.SourceType
+    var completionHandler: (UIImage?) -> Void
+    func makeUIViewController(context: UIViewControllerRepresentableContext<ImagePicker>) -> UIImagePickerController {
+        let imagePickerController = UIImagePickerController()
+        imagePickerController.sourceType = sourceType
+        imagePickerController.delegate = context.coordinator
+        return imagePickerController
+    }
+    
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: UIViewControllerRepresentableContext<ImagePicker>) {
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        return Coordinator(completionHandler: completionHandler)
+    }
+    
+    class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
+        var completionHandler: (UIImage?) -> Void
+        
+        init(completionHandler: @escaping (UIImage?) -> Void) {
+            self.completionHandler = completionHandler
+        }
+        
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+            if let image = info[.originalImage] as? UIImage {
+                completionHandler(image)
+            } else {
+                completionHandler(nil)
+            }
+        }
+        
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            completionHandler(nil)
+        }
+    }
+}
+
