@@ -21,10 +21,12 @@ struct MapLocation: Identifiable {
 
 struct ContentView: View {
     @State private var showingCamera = false
+    @State private var numPinsString = ""
+    @State private var numPins = 0
     @State private var selectedImage: UIImage?
     @State private var region = MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 42.235830, longitude: -71.811030), span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))
     @StateObject private var viewModel = LocationViewModel()
-    @State var MapLocations = [
+    @State var MapLocations = [  // MAKE USER NUM IN RADIUS
         MapLocation(name: "PIN 1", latitude: 42.238237, longitude: -71.810519, photo: nil),
         MapLocation(name: "PIN 2", latitude: 40.8559, longitude: -73.2007, photo: nil)
     ]
@@ -56,6 +58,14 @@ struct ContentView: View {
                     }
                 VStack {
                     Spacer()
+                    VStack{
+                        TextField("Enter number of pins", text: $numPinsString)
+                    }.textFieldStyle(.roundedBorder).frame(width: 300).font(.callout).cornerRadius(40).opacity(numPins > 0 ? 0.0 : 1.0)
+                    Button(action:{
+                        numPins = Int(numPinsString)!
+                    }){
+                        Text("Press to begin").foregroundColor(.black).fontWeight(.bold).frame(width: 150)
+                    }.background(Color.blue).clipShape(Capsule()).opacity(numPins > 0 ? 0.0 : 1.0)
                     HStack {
                         Spacer()
                         Button(action: {
