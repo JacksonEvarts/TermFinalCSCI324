@@ -26,10 +26,7 @@ struct ContentView: View {
     @State private var selectedImage: UIImage?
     @State private var region = MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 42.235830, longitude: -71.811030), span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))
     @StateObject private var viewModel = LocationViewModel()
-    @State var MapLocations = [  // MAKE USER NUM IN RADIUS
-        MapLocation(name: "PIN 1", latitude: 42.238237, longitude: -71.810519, photo: nil),
-        MapLocation(name: "PIN 2", latitude: 40.8559, longitude: -73.2007, photo: nil)
-    ]
+    @State var MapLocations = [MapLocation]()
     @State private var userLocation: CLLocation?
 
     func userIsNearPin(distance: Double = 5) -> Bool {
@@ -62,7 +59,12 @@ struct ContentView: View {
                         TextField("Enter number of pins", text: $numPinsString)
                     }.textFieldStyle(.roundedBorder).frame(width: 300).font(.callout).cornerRadius(40).opacity(numPins > 0 ? 0.0 : 1.0)
                     Button(action:{
-                        numPins = Int(numPinsString)!
+                        numPins = Int(numPinsString) ?? 0
+                        var deployPins = numPins
+                        while (deployPins > 0){
+                            deployPins -= 1
+                            MapLocations.append(MapLocation(name: "PIN\(deployPins + 1)", latitude: (userLocation?.coordinate.latitude)!  + Double.random(in: -0.00833...0.00833) , longitude: (userLocation?.coordinate.longitude)! + Double.random(in: -0.00833...0.00833) ))
+                        }
                     }){
                         Text("Press to begin").foregroundColor(.black).fontWeight(.bold).frame(width: 150)
                     }.background(Color.blue).clipShape(Capsule()).opacity(numPins > 0 ? 0.0 : 1.0)
@@ -203,7 +205,7 @@ struct MapView: UIViewRepresentable {
             
             let location = self.mapView.MapLocations.first { $0.coordinate.latitude == annotation.coordinate.latitude && $0.coordinate.longitude == annotation.coordinate.longitude }
             if let location = location, let photo = location.photo {
-                let imageView = UIImageView(frame: CGRect(x: 0, y: 0, width: 50, height: 50))
+                let imageView = UIImageView(frame: CGRect(x: 0, y: 0, width: 50, height: 100))
                 imageView.image = photo
                 imageView.contentMode = .scaleAspectFill
                 imageView.clipsToBounds = true
