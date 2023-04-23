@@ -20,6 +20,8 @@ struct MapLocation: Identifiable {
 }
 
 struct ContentView: View {
+    @State private var countDownTimer = 0
+    @State private var timerRunning = false
     @State private var showingCamera = false
     @State private var numPinsString = ""
     @State private var numPins = 0
@@ -28,6 +30,7 @@ struct ContentView: View {
     @StateObject private var viewModel = LocationViewModel()
     @State var MapLocations = [MapLocation]()
     @State private var userLocation: CLLocation?
+    let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     func userIsNearPin(distance: Double = 5) -> Bool {
         guard let userLocation = userLocation else { return false }
@@ -54,12 +57,22 @@ struct ContentView: View {
                         viewModel.checkLocationAuthorization()
                     }
                 VStack {
+                    Text("\(countDownTimer/60):\(countDownTimer % 60, specifier: "%02d")").onReceive(timer){ _ in
+                        if countDownTimer > 0  && timerRunning{
+                            countDownTimer -= 1
+                        } else {
+                            timerRunning = false
+                        }
+                        
+                    }.background(Color.white).clipShape(Capsule()).opacity(timerRunning ? 1.0 : 0.0).font(.title).foregroundColor(Color.black).frame(width: 150)
                     Spacer()
                     VStack{
                         TextField("Enter number of pins", text: $numPinsString)
                     }.textFieldStyle(.roundedBorder).frame(width: 300).font(.callout).cornerRadius(40).opacity(numPins > 0 ? 0.0 : 1.0)
                     Button(action:{
                         numPins = Int(numPinsString) ?? 0
+                        countDownTimer = numPins * 120
+                        timerRunning = true
                         var deployPins = numPins
                         while (deployPins > 0){
                             deployPins -= 1
@@ -155,12 +168,13 @@ struct MapView: UIViewRepresentable {
         let mapView = MKMapView()
         mapView.delegate = context.coordinator
         mapView.showsUserLocation = true
+/*        mapView.region = MKCoordinateRegion(center: userLocation?.coordinate ?? CLLocationCoordinate2D(latitude: 69, longitude: 69),span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)) */
         return mapView
     }
     
     func updateUIView(_ view: MKMapView, context: Context) {
         if let userLocation = userLocation {
-            region.center = CLLocationCoordinate2D(latitude: userLocation.coordinate.latitude, longitude: userLocation.coordinate.longitude)
+            /*          $region = MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: userLocation.coordinate.latitude, longitude: userLocation.coordinate.longitude), span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)) */
         }
         view.removeAnnotations(view.annotations)
         for location in MapLocations {
@@ -220,6 +234,7 @@ struct MapView: UIViewRepresentable {
         func mapView(_ mapView: MKMapView, didUpdate userLocation: MKUserLocation) {
             self.mapView.userLocation = CLLocation(latitude: userLocation.coordinate.latitude,
                                                    longitude: userLocation.coordinate.longitude)
+         /*   self.mapView.region = MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: userLocation.coordinate.latitude, longitude: userLocation.coordinate.longitude), span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)) */
         }
     }
 }
