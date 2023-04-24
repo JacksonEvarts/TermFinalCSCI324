@@ -20,6 +20,8 @@ struct MapLocation: Identifiable {
 }
 
 struct ContentView: View {
+    @State private var countDownTimer = 0
+    @State private var timerRunning = false
     @State private var showingCamera = false
     @State private var numPinsString = ""
     @State private var numPins = 0
@@ -28,17 +30,18 @@ struct ContentView: View {
     @StateObject private var viewModel = LocationViewModel()
     @State var MapLocations = [MapLocation]()
     @State private var userLocation: CLLocation?
+    let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     @State private var zoomToUser = false
-    // Ensures user enters integer value
-    private var numPinsStringBinding: Binding<String> {
-        Binding(
-            get: { numPinsString },
-            set: {newValue in
-                let filteredValue = String(newValue.filter { "0123456789".contains($0) })
-                numPinsString = filteredValue
-            }
-        )
-    }
+        // Ensures user enters integer value
+        private var numPinsStringBinding: Binding<String> {
+            Binding(
+                get: { numPinsString },
+                set: {newValue in
+                    let filteredValue = String(newValue.filter { "0123456789".contains($0) })
+                    numPinsString = filteredValue
+                }
+            )
+        }
 
     func userIsNearPin(distance: Double = 5) -> Bool {
         guard let userLocation = userLocation else { return false }
@@ -52,28 +55,26 @@ struct ContentView: View {
     }
     
     func closestPinIndex() -> Int? {
-        guard let userLocation = userLocation else { return nil }
-        var closestPinIndex: Int?
-        var closestDistance: CLLocationDistance?
-        for (index, location) in MapLocations.enumerated() {
-            let pinLocation = CLLocation(latitude: location.latitude, longitude: location.longitude)
-            let distance = userLocation.distance(from: pinLocation)
-            if closestDistance == nil || distance < closestDistance! {
-                closestDistance = distance
-                closestPinIndex = index
+            guard let userLocation = userLocation else { return nil }
+            var closestPinIndex: Int?
+            var closestDistance: CLLocationDistance?
+            for (index, location) in MapLocations.enumerated() {
+                let pinLocation = CLLocation(latitude: location.latitude, longitude: location.longitude)
+                let distance = userLocation.distance(from: pinLocation)
+                if closestDistance == nil || distance < closestDistance! {
+                    closestDistance = distance
+                    closestPinIndex = index
+                }
             }
-        }
-        return closestPinIndex
+            return closestPinIndex
     }
-
+    
     func pinColor(location: MapLocation) -> Color {
         return location.photo != nil ? .green : .red
     }
-    
     func hideKeyboard() {
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
-
     var body: some View {
         NavigationView {
             ZStack {
@@ -84,12 +85,30 @@ struct ContentView: View {
                         viewModel.checkLocationAuthorization()
                     }
                 VStack {
+                    HStack{
+                        Button(action:{
+                            zoomToUser = zoomToUser ? false : true
+                        }){
+                            Text("Zoom to location").foregroundColor(.black).fontWeight(.bold).frame(width: 150)
+                        }.background(Color.blue).clipShape(Capsule()).padding()
+                        Spacer()
+                        Text("\(countDownTimer/60):\(countDownTimer % 60, specifier: "%02d")").onReceive(timer){ _ in
+                            if countDownTimer > 0  && timerRunning{
+                                countDownTimer -= 1
+                            } else {
+                                timerRunning = false
+                            }
+                            
+                        }.background(Color.white).clipShape(Capsule()).opacity(timerRunning ? 1.0 : 0.0).font(.title).foregroundColor(Color.black).frame(width: 150)
+                    }
                     Spacer()
                     VStack{
                         TextField("Enter number of pins", text: numPinsStringBinding)
                     }.textFieldStyle(.roundedBorder).frame(width: 300).font(.callout).cornerRadius(40).opacity(numPins > 0 ? 0.0 : 1.0)
                     Button(action:{
                         numPins = Int(numPinsString) ?? 0
+                        countDownTimer = numPins * 120
+                        timerRunning = true
                         var deployPins = numPins
                         while (deployPins > 0){
                             deployPins -= 1
@@ -121,7 +140,7 @@ struct ContentView: View {
                 .sheet(isPresented: $showingCamera) {
                     ImagePicker(sourceType: .camera) { image in
                         selectedImage = image
-                        if let selectedIndex = closestPinIndex(), userLocation?.distance(from: CLLocation(latitude: MapLocations[selectedIndex].latitude, longitude: MapLocations[selectedIndex].longitude)) ?? 0 <= 5 {
+                        if let selectedIndex = MapLocations.firstIndex(where: { userLocation?.distance(from: CLLocation(latitude: $0.latitude, longitude: $0.longitude)) ?? 0 <= 5 }) {
                             MapLocations[selectedIndex].photo = image
                         }
                     }
