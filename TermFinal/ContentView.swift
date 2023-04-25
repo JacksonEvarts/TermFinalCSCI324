@@ -25,6 +25,8 @@ struct ContentView: View {
     @State private var countDownTimer = 0
     @State private var timerRunning = false
     @State private var showingCamera = false
+    @State private var radString = ""
+    @State private var rad = 0.0
     @State private var numPinsString = ""
     @State private var numPins = 0
     @State private var selectedImage: UIImage?
@@ -114,19 +116,23 @@ struct ContentView: View {
                     Spacer()
                     VStack{
                         // at start of game, displays text field for user to enter desired number of pins
-                        TextField("Enter number of pins", text: numPinsStringBinding)
-                    }.textFieldStyle(.roundedBorder).frame(width: 300).font(.callout).cornerRadius(40).opacity(numPins > 0 ? 0.0 : 1.0)
+                        TextField("Enter number of pins", text: numPinsStringBinding).textFieldStyle(.roundedBorder).frame(width: 300).font(.callout).cornerRadius(40).opacity(numPins > 0 ? 0.0 : 1.0)
+                        TextField("Enter radius(miles)", text: $radString).textFieldStyle(.roundedBorder).frame(width: 300).font(.callout).cornerRadius(40).opacity(numPins > 0 ? 0.0 : 1.0)
+                    }
                     // button which accepts entered value in text field
                     Button(action:{
-                        numPins = Int(numPinsString) ?? 0
+                        numPins = Int(numPinsString) ?? 3 // if nothing entered 3 pins
                         numPinsString = ""
-                        // three minutes per pin
-                        countDownTimer = numPins * 180
+                        rad = Double(radString) ?? 0.5 //if nothing entered half mile radius
+                        rad /= 60.0
+                        radString = "";
+                        // five minutes per pin
+                        countDownTimer = numPins * 300
                         timerRunning = true
                         var deployPins = numPins
                         while (deployPins > 0){
                             deployPins -= 1
-                            MapLocations.append(MapLocation(name: "PIN\(deployPins + 1)", latitude: (userLocation?.coordinate.latitude)! + Double.random(in: -0.0041666...0.0041666), longitude: (userLocation?.coordinate.longitude)! + Double.random(in: -0.0041666...0.0041666), found: false))
+                            MapLocations.append(MapLocation(name: "PIN\(deployPins + 1)", latitude: (userLocation?.coordinate.latitude)! + Double.random(in: -rad...rad), longitude: (userLocation?.coordinate.longitude)! + Double.random(in: -rad...rad), found: false))
                         }
                         hideKeyboard()
                         zoomToUser = true
