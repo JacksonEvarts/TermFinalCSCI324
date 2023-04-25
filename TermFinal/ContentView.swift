@@ -129,7 +129,7 @@ struct ContentView: View {
                         numPins = Int(numPinsString) ?? 3 // if nothing entered 3 pins
                         numPinsString = ""
                         rad = Double(radString) ?? 0.5 //if nothing entered half mile radius
-                        rad /= 60.0
+                        rad /= 60.0 // roughly 1/60th of lat and long per mile
                         radString = "";
                         // five minutes per pin
                         countDownTimer = numPins * 300
@@ -184,23 +184,6 @@ struct ContentView: View {
                 VStack{
                     Text("You Win!").font(.title).fontWeight(.semibold).padding(20)
                     Text("You found \(numPins) pins with \(countDownTimer/60):\(countDownTimer % 60, specifier: "%02d") left!").padding(10)
-                    /*TextField("Enter new number of pins", text: $numPinsString)
-                        .textFieldStyle(.roundedBorder).frame(width: 300).font(.callout).cornerRadius(40)
-                    Button(action:{
-                        MapLocations.removeAll()
-                        numPins = Int(numPinsString) ?? 0
-                        countDownTimer = numPins * 120
-                        timerRunning = true
-                        var deployPins = numPins
-                        while (deployPins > 0){
-                            deployPins -= 1
-                            MapLocations.append(MapLocation(name: "PIN\(deployPins + 1)", latitude: (userLocation?.coordinate.latitude)! + Double.random(in: -0.0041666...0.0041666), longitude: (userLocation?.coordinate.longitude)! + Double.random(in: -0.0041666...0.0041666), found: false))
-                        }
-                        hideKeyboard()
-                        zoomToUser = true
-                    }){
-                        Text("Press to play again").foregroundColor(.black).fontWeight(.bold).frame(width: 150)
-                    }.background(Color.blue).clipShape(Capsule()) */
                 }.background(Color.black).background(Rectangle().shadow(radius: 15)).cornerRadius(15).opacity(MapLocations.allSatisfy(\.found) && !MapLocations.isEmpty ? 1.0 : 0.0).gridCellAnchor(.center)
                 VStack{
                     Text("You Lose!").font(.title).fontWeight(.semibold).padding(20)
