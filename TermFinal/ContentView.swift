@@ -98,7 +98,7 @@ struct ContentView: View {
                     .accentColor(Color(.systemMint))
                     .onAppear {
                         viewModel.checkLocationAuthorization()
-                }
+                    }
                 
                 VStack {
                     HStack{
@@ -106,8 +106,8 @@ struct ContentView: View {
                         Button(action:{
                             zoomToUser = true
                         }){
-                                Text("Zoom to location").foregroundColor(.black).fontWeight(.bold).frame(width: 150)
-                            }.background(Color.blue).clipShape(Capsule()).padding()
+                            Text("Zoom to location").foregroundColor(.black).fontWeight(.bold).frame(width: 150)
+                        }.background(Color.blue).clipShape(Capsule()).padding()
                         Spacer()
                         VStack{
                             Text("\(numPins - MapLocations.filter(\.found).count)").fontWeight(.semibold)
@@ -119,7 +119,7 @@ struct ContentView: View {
                             if countDownTimer > 0  && timerRunning && !MapLocations.allSatisfy(\.found){
                                 countDownTimer -= 1
                             } else {
-                                    timerRunning = false
+                                timerRunning = false
                             }
                             
                         }.background(Color.white).clipShape(Capsule()).opacity(timerRunning ? 1.0 : 0.0).font(.title).foregroundColor(Color.black).frame(width: 150)
@@ -127,7 +127,7 @@ struct ContentView: View {
                     Spacer()
                     VStack{
                         // at start of game, displays text field for user to enter desired number of pins
-                        TextField("Enter number of pins", text: numPinsStringBinding).textFieldStyle(.roundedBorder).frame(width: 300).font(.callout).cornerRadius(40).opacity(numPins > 0 ? 0.0 : 1.0)
+                        TextField("Enter number of pins(1-10)", text: numPinsStringBinding).textFieldStyle(.roundedBorder).frame(width: 300).font(.callout).cornerRadius(40).opacity(numPins > 0 ? 0.0 : 1.0)
                         TextField("Enter radius(miles)", text: $radString).textFieldStyle(.roundedBorder).frame(width: 300).font(.callout).cornerRadius(40).opacity(numPins > 0 ? 0.0 : 1.0)
                     }
                     // button which accepts entered value in text field
@@ -148,8 +148,8 @@ struct ContentView: View {
                         hideKeyboard()
                         zoomToUser = true
                     }){
-                            Text("Press to begin").foregroundColor(.black).fontWeight(.bold).frame(width: 150)
-                        }.background(Color.blue).clipShape(Capsule()).opacity(numPins > 0 ? 0.0 : 1.0)
+                        Text("Press to begin").foregroundColor(.black).fontWeight(.bold).frame(width: 150)
+                    }.background(Color.blue).clipShape(Capsule()).opacity(numPins > 0 ? 0.0 : 1.0)
                     HStack {
                         // camera button, which activates only when user is in range of a pin
                         Button(action:{
@@ -159,21 +159,21 @@ struct ContentView: View {
                             timerRunning = false
                         }){
                             Text("Restart").foregroundColor(.black).background(Color.blue).clipShape(Capsule()).opacity(numPins == 0 ? 0.0 : 1.0).fontWeight(.semibold).padding().font(.title)
-                            }
+                        }
                         Spacer()
                         Button(action: {
                             if userIsNearPin() && countDownTimer > 0 {
                                 showingCamera = true
                             }
                         }) {
-                                Image(systemName: "camera.circle.fill")
-                                    .resizable()
-                                    .frame(width: 75, height: 75)
-                                    .padding()
-                            }
-                            .disabled(!userIsNearPin())
-                            .opacity(userIsNearPin() && countDownTimer > 0 ? 1 : 0.5)
-                            .padding()
+                            Image(systemName: "camera.circle.fill")
+                                .resizable()
+                                .frame(width: 75, height: 75)
+                                .padding()
+                        }
+                        .disabled(!userIsNearPin())
+                        .opacity(userIsNearPin() && countDownTimer > 0 ? 1 : 0.5)
+                        .padding()
                     }
                 }
                 // opens camera view and allows user to take photo. Photo is assigned to closest pin in range
@@ -189,35 +189,36 @@ struct ContentView: View {
                 }
                 // opens win screen
                 VStack{
-                    VStack{
-                        Text("You Win!").font(.title).fontWeight(.semibold).padding(20)
-                        Text("You found \(numPins) pins with \(countDownTimer/60):\(countDownTimer % 60, specifier: "%02d") left!").padding(10)
-                    }.background(Color.black).background(Rectangle().shadow(radius: 15)).cornerRadius(15).opacity(MapLocations.allSatisfy(\.found) && !MapLocations.isEmpty ? 1.0 : 0.0).gridCellAnchor(.center)
-                    VStack{
-                        Text("You Lose!").font(.title).fontWeight(.semibold).padding(20)
-                        Text("You found \(MapLocations.filter(\.found).count) pins out of \(numPins).").padding(10)
-                    }.background(Color.black).background(Rectangle().shadow(radius: 15)).cornerRadius(15).opacity((!timerRunning && !MapLocations.isEmpty && countDownTimer == 0) ? 1.0 : 0.0).gridCellAnchor(.center)
-                    if !MapLocations.isEmpty && (MapLocations.allSatisfy(\.found) || (!timerRunning && !MapLocations.isEmpty && countDownTimer == 0)) {
-                        Button(action: {
-                            showingPhotos = true
-                        }) {
-                            Text("View Photos")
+                    ZStack{
+                        VStack{
+                            Text("You Win!").font(.title).fontWeight(.semibold).padding(20)
+                            Text("You found \(numPins) pins with \(countDownTimer/60):\(countDownTimer % 60, specifier: "%02d") left!").padding(10)
+                        }.background(Color.black).background(Rectangle().shadow(radius: 15)).cornerRadius(15).opacity(MapLocations.allSatisfy(\.found) && !MapLocations.isEmpty ? 1.0 : 0.0).gridCellAnchor(.center)
+                        VStack{
+                            Text("You Lose!").font(.title).fontWeight(.semibold).padding(20)
+                            Text("You found \(MapLocations.filter(\.found).count) pins out of \(numPins).").padding(10)
+                        }.background(Color.black).background(Rectangle().shadow(radius: 15)).cornerRadius(15).opacity((!timerRunning && !MapLocations.isEmpty && countDownTimer == 0) ? 1.0 : 0.0).gridCellAnchor(.center)
+                    }
+                        if !MapLocations.isEmpty && (MapLocations.allSatisfy(\.found) || (!timerRunning && !MapLocations.isEmpty && countDownTimer == 0)) {
+                            Button(action: {
+                                showingPhotos = true
+                            }) {
+                                Text("View Photos")
                                     .font(.title2)
                                     .padding()
                                     .background(Color.blue)
                                     .foregroundColor(.white)
                                     .cornerRadius(10)
                                     .padding()
+                            }
+                            .sheet(isPresented: $showingPhotos) {
+                                CarouselView(photos: .constant(photosInPins()))
+                            }
                         }
-                        .sheet(isPresented: $showingPhotos) {
-                            CarouselView(photos: .constant(photosInPins()))
-                        }
-                    }
                 }
             }
         }
     }
-    
     
     
     struct ContentView_Previews: PreviewProvider {
