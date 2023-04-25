@@ -98,10 +98,15 @@ struct ContentView: View {
                     HStack{
                         // button which when pressed, shifts view to zoom in to set depth centered at user location
                         Button(action:{
-                            zoomToUser = zoomToUser ? false : true
+                            zoomToUser = true
                         }){
                             Text("Zoom to location").foregroundColor(.black).fontWeight(.bold).frame(width: 150)
                         }.background(Color.blue).clipShape(Capsule()).padding()
+                        Spacer()
+                        VStack{
+                            Text("\(numPins - MapLocations.filter(\.found).count)").fontWeight(.semibold)
+                            Text("pins left").frame(width: 75)
+                        }.background(Color.white).background(Rectangle()).cornerRadius(15).foregroundColor(.black).opacity(!MapLocations.isEmpty ? 1.0 : 0.0)
                         Spacer()
                         // displays clock, which counts down
                         Text("\(countDownTimer/60):\(countDownTimer % 60, specifier: "%02d")").onReceive(timer){ _ in
@@ -141,6 +146,14 @@ struct ContentView: View {
                     }.background(Color.blue).clipShape(Capsule()).opacity(numPins > 0 ? 0.0 : 1.0)
                     HStack {
                         // camera button, which activates only when user is in range of a pin
+                        Button(action:{
+                            MapLocations.removeAll()
+                            numPins = 0
+                            rad = 0.0
+                            timerRunning = false
+                        }){
+                            Text("Restart").foregroundColor(.black).background(Color.blue).clipShape(Capsule()).opacity(numPins == 0 ? 0.0 : 1.0).fontWeight(.semibold).padding().font(.title)
+                        }
                         Spacer()
                         Button(action: {
                             if userIsNearPin() && countDownTimer > 0 {
@@ -155,7 +168,6 @@ struct ContentView: View {
                         .disabled(!userIsNearPin())
                         .opacity(userIsNearPin() && countDownTimer > 0 ? 1 : 0.5)
                         .padding()
-                        Spacer()
                     }
                 }
                 // opens camera view and allows user to take photo. Photo is assigned to closest pin in range
@@ -170,9 +182,9 @@ struct ContentView: View {
                 }
                 // opens win screen
                 VStack{
-                    Text("You Win!").font(.title).fontWeight(.semibold).padding(30)
+                    Text("You Win!").font(.title).fontWeight(.semibold).padding(20)
                     Text("You found \(numPins) pins with \(countDownTimer/60):\(countDownTimer % 60, specifier: "%02d") left!").padding(10)
-                    TextField("Enter new number of pins", text: $numPinsString)
+                    /*TextField("Enter new number of pins", text: $numPinsString)
                         .textFieldStyle(.roundedBorder).frame(width: 300).font(.callout).cornerRadius(40)
                     Button(action:{
                         MapLocations.removeAll()
@@ -188,8 +200,12 @@ struct ContentView: View {
                         zoomToUser = true
                     }){
                         Text("Press to play again").foregroundColor(.black).fontWeight(.bold).frame(width: 150)
-                    }.background(Color.blue).clipShape(Capsule())
-                }.background(Color.black).background(Rectangle().shadow(radius: 15)).cornerRadius(15).opacity(MapLocations.allSatisfy(\.found) && !MapLocations.isEmpty ? 1.0 : 0.0)
+                    }.background(Color.blue).clipShape(Capsule()) */
+                }.background(Color.black).background(Rectangle().shadow(radius: 15)).cornerRadius(15).opacity(MapLocations.allSatisfy(\.found) && !MapLocations.isEmpty ? 1.0 : 0.0).gridCellAnchor(.center)
+                VStack{
+                    Text("You Lose!").font(.title).fontWeight(.semibold).padding(20)
+                    Text("You found \(MapLocations.filter(\.found).count) pins out of \(numPins).").padding(10)
+                }.background(Color.black).background(Rectangle().shadow(radius: 15)).cornerRadius(15).opacity((!timerRunning && !MapLocations.isEmpty && countDownTimer == 0) ? 1.0 : 0.0).gridCellAnchor(.center)
             }
         }
     }
