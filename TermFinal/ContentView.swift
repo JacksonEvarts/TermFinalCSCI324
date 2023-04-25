@@ -1,8 +1,8 @@
 //
-//  ContentView.swift
-//  TermFinal
+//  ContentView.swift
+//  TermFinal
 //
-//  Created by Jackson Evarts, Eli Werstler, Thomas Creighton on 3/26/23.
+//  Created by Jackson Evarts, Eli Werstler, Thomas Creighton on 3/26/23.
 
 import MapKit
 import SwiftUI
@@ -22,6 +22,7 @@ struct MapLocation: Identifiable {
 }
 
 struct ContentView: View {
+    @State private var showingPhotos: Bool = false
     @State private var countDownTimer = 0
     @State private var timerRunning = false
     @State private var showingCamera = false
@@ -85,6 +86,10 @@ struct ContentView: View {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
     
+    func photosInPins() -> [UIImage] {
+        return MapLocations.compactMap { $0.photo }
+    }
+    
     var body: some View {
         NavigationView {
             ZStack {
@@ -93,15 +98,16 @@ struct ContentView: View {
                     .accentColor(Color(.systemMint))
                     .onAppear {
                         viewModel.checkLocationAuthorization()
-                    }
+                }
+                
                 VStack {
                     HStack{
                         // button which when pressed, shifts view to zoom in to set depth centered at user location
                         Button(action:{
                             zoomToUser = true
                         }){
-                            Text("Zoom to location").foregroundColor(.black).fontWeight(.bold).frame(width: 150)
-                        }.background(Color.blue).clipShape(Capsule()).padding()
+                                Text("Zoom to location").foregroundColor(.black).fontWeight(.bold).frame(width: 150)
+                            }.background(Color.blue).clipShape(Capsule()).padding()
                         Spacer()
                         VStack{
                             Text("\(numPins - MapLocations.filter(\.found).count)").fontWeight(.semibold)
@@ -113,7 +119,7 @@ struct ContentView: View {
                             if countDownTimer > 0  && timerRunning && !MapLocations.allSatisfy(\.found){
                                 countDownTimer -= 1
                             } else {
-                                timerRunning = false
+                                    timerRunning = false
                             }
                             
                         }.background(Color.white).clipShape(Capsule()).opacity(timerRunning ? 1.0 : 0.0).font(.title).foregroundColor(Color.black).frame(width: 150)
@@ -129,7 +135,7 @@ struct ContentView: View {
                         numPins = Int(numPinsString) ?? 3 // if nothing entered 3 pins
                         numPinsString = ""
                         rad = Double(radString) ?? 0.5 //if nothing entered half mile radius
-                        rad /= 60.0 // roughly 1/60th of lat and long per mile
+                        rad /= 60.0
                         radString = "";
                         // five minutes per pin
                         countDownTimer = numPins * 300
@@ -142,8 +148,8 @@ struct ContentView: View {
                         hideKeyboard()
                         zoomToUser = true
                     }){
-                        Text("Press to begin").foregroundColor(.black).fontWeight(.bold).frame(width: 150)
-                    }.background(Color.blue).clipShape(Capsule()).opacity(numPins > 0 ? 0.0 : 1.0)
+                            Text("Press to begin").foregroundColor(.black).fontWeight(.bold).frame(width: 150)
+                        }.background(Color.blue).clipShape(Capsule()).opacity(numPins > 0 ? 0.0 : 1.0)
                     HStack {
                         // camera button, which activates only when user is in range of a pin
                         Button(action:{
@@ -153,21 +159,21 @@ struct ContentView: View {
                             timerRunning = false
                         }){
                             Text("Restart").foregroundColor(.black).background(Color.blue).clipShape(Capsule()).opacity(numPins == 0 ? 0.0 : 1.0).fontWeight(.semibold).padding().font(.title)
-                        }
+                            }
                         Spacer()
                         Button(action: {
                             if userIsNearPin() && countDownTimer > 0 {
                                 showingCamera = true
                             }
                         }) {
-                            Image(systemName: "camera.circle.fill")
-                                .resizable()
-                                .frame(width: 75, height: 75)
-                                .padding()
-                        }
-                        .disabled(!userIsNearPin())
-                        .opacity(userIsNearPin() && countDownTimer > 0 ? 1 : 0.5)
-                        .padding()
+                                Image(systemName: "camera.circle.fill")
+                                    .resizable()
+                                    .frame(width: 75, height: 75)
+                                    .padding()
+                            }
+                            .disabled(!userIsNearPin())
+                            .opacity(userIsNearPin() && countDownTimer > 0 ? 1 : 0.5)
+                            .padding()
                     }
                 }
                 // opens camera view and allows user to take photo. Photo is assigned to closest pin in range
@@ -178,17 +184,36 @@ struct ContentView: View {
                             MapLocations[selectedIndex].photo = image
                             MapLocations[selectedIndex].found = true
                         }
+                        showingCamera = false
                     }
                 }
                 // opens win screen
                 VStack{
-                    Text("You Win!").font(.title).fontWeight(.semibold).padding(20)
-                    Text("You found \(numPins) pins with \(countDownTimer/60):\(countDownTimer % 60, specifier: "%02d") left!").padding(10)
-                }.background(Color.black).background(Rectangle().shadow(radius: 15)).cornerRadius(15).opacity(MapLocations.allSatisfy(\.found) && !MapLocations.isEmpty ? 1.0 : 0.0).gridCellAnchor(.center)
-                VStack{
-                    Text("You Lose!").font(.title).fontWeight(.semibold).padding(20)
-                    Text("You found \(MapLocations.filter(\.found).count) pins out of \(numPins).").padding(10)
-                }.background(Color.black).background(Rectangle().shadow(radius: 15)).cornerRadius(15).opacity((!timerRunning && !MapLocations.isEmpty && countDownTimer == 0) ? 1.0 : 0.0).gridCellAnchor(.center)
+                    VStack{
+                        Text("You Win!").font(.title).fontWeight(.semibold).padding(20)
+                        Text("You found \(numPins) pins with \(countDownTimer/60):\(countDownTimer % 60, specifier: "%02d") left!").padding(10)
+                    }.background(Color.black).background(Rectangle().shadow(radius: 15)).cornerRadius(15).opacity(MapLocations.allSatisfy(\.found) && !MapLocations.isEmpty ? 1.0 : 0.0).gridCellAnchor(.center)
+                    VStack{
+                        Text("You Lose!").font(.title).fontWeight(.semibold).padding(20)
+                        Text("You found \(MapLocations.filter(\.found).count) pins out of \(numPins).").padding(10)
+                    }.background(Color.black).background(Rectangle().shadow(radius: 15)).cornerRadius(15).opacity((!timerRunning && !MapLocations.isEmpty && countDownTimer == 0) ? 1.0 : 0.0).gridCellAnchor(.center)
+                    if !MapLocations.isEmpty && (MapLocations.allSatisfy(\.found) || (!timerRunning && !MapLocations.isEmpty && countDownTimer == 0)) {
+                        Button(action: {
+                            showingPhotos = true
+                        }) {
+                            Text("View Photos")
+                                    .font(.title2)
+                                    .padding()
+                                    .background(Color.blue)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(10)
+                                    .padding()
+                        }
+                        .sheet(isPresented: $showingPhotos) {
+                            CarouselView(photos: .constant(photosInPins()))
+                        }
+                    }
+                }
             }
         }
     }
@@ -312,7 +337,7 @@ struct ContentView: View {
                     annotationView!.canShowCallout = true
                 } else {
                     annotationView!.annotation = annotation
-                }
+                    }
                 
                 // finds the MapLocation object that corresponds to the current annotation by checking if its latitude and longitude match the annotation's coordinates
                 let location = self.mapView.MapLocations.first { $0.coordinate.latitude == annotation.coordinate.latitude && $0.coordinate.longitude == annotation.coordinate.longitude }
@@ -334,7 +359,7 @@ struct ContentView: View {
             // called when the user's location is updated. Sets the userLocation property of the MapView to a new CLLocation object with the updated coordinates
             func mapView(_ mapView: MKMapView, didUpdate userLocation: MKUserLocation) {
                 self.mapView.userLocation = CLLocation(latitude: userLocation.coordinate.latitude,
-                                                       longitude: userLocation.coordinate.longitude)
+                                                                       longitude: userLocation.coordinate.longitude)
             }
         }
     }
@@ -384,4 +409,29 @@ struct ContentView: View {
             }
         }
     }
+    struct CarouselView: View {
+        @Binding var photos: [UIImage]
+        @State private var selectedIndex = 0
+        
+        var body: some View {
+            VStack {
+                if !photos.isEmpty {
+                    TabView(selection: $selectedIndex) {
+                        ForEach(0..<photos.count, id: \.self) { index in
+                            Image(uiImage: photos[index])
+                                .resizable()
+                                .scaledToFit()
+                                .tag(index)
+                        }
+                    }
+                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .always))
+                } else {
+                        Text("No photos to display")
+                            .font(.title)
+                            .padding()
+                    }
+            }
+        }
+    }
 }
+
